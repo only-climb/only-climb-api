@@ -2,6 +2,7 @@ package app.onlyclimb.api.infrastructure.adapter.in.web;
 
 import app.onlyclimb.api.domain.exception.AssessmentDefinitionNotFoundException;
 import app.onlyclimb.api.domain.exception.AssessmentResultNotFoundException;
+import app.onlyclimb.api.domain.exception.CannotFollowSelfException;
 import app.onlyclimb.api.domain.exception.ContentOwnershipException;
 import app.onlyclimb.api.domain.exception.DuplicateUserException;
 import app.onlyclimb.api.domain.exception.ExerciseNotFoundException;
@@ -39,7 +40,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({InvalidExerciseConfigException.class, InvalidGradeException.class,
-            InvalidAssessmentResultException.class})
+            InvalidAssessmentResultException.class, CannotFollowSelfException.class})
     public ProblemDetail handleInvalidConfig(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
