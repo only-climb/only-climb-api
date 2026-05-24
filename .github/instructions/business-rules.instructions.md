@@ -125,6 +125,22 @@ A `TrainingPlan USER_CREATED` produced by AI on behalf of the user.
 
 The AI (external LLM via API, e.g., OpenAI with structured output) receives the assessment metrics, goal, and constraints, and returns a structured plan. This plan is persisted as a regular `USER_CREATED TrainingPlan`.
 
+**Async execution model.** LLM calls take 10–60s and must not block HTTP requests. The flow is job-based:
+
+1. Client calls `POST /api/v1/ai-plans`. Application service:
+   - Validates premium subscription + assessment + goal + weight.
+   - Rejects if the user already has a `PENDING`/`RUNNING` job (partial unique index enforces this at DB level).
+   - Builds the immutable `input_payload` snapshot (schedule constraints + assessment metrics + goal + user profile fields).
+   - Inserts an `ai_plan_generation_jobs` row with `status = PENDING` and returns its UUID.
+2. A worker picks the job, calls the AI provider via `AiPlanGeneratorPort` (output port), and updates the row: `started_at`, `status = RUNNING`, then `model`, `prompt_version`, `external_request_id`, token usage and `cost_micros`.
+3. On success: persists the resulting `TrainingPlan USER_CREATED` (`generation_type = AI_GENERATED`) and sets `resulting_plan_id`, `status = SUCCEEDED`, `finished_at`, `raw_response`.
+4. On failure: records `error_code`, `error_message`, `status = FAILED`, `finished_at`. Client can retry — the new job stores the old job id in `retry_of_job_id`.
+5. Client polls `GET /api/v1/ai-plans/jobs/{uuid}` (or subscribes via SSE) until terminal status.
+
+**Provider abstraction.** `ai_provider` is a Postgres enum (`OPENAI` today). Domain defines `AiPlanGeneratorPort` with `generate(input)` returning a structured plan; provider-specific code (OpenAI client, structured output schema, retry policy) lives only in the infrastructure adapter. Switching to Anthropic or a local model is an adapter swap.
+
+**Auditing & quota.** Every job records `prompt_tokens`, `completion_tokens`, `total_tokens`, `cost_micros`, `cost_currency`, `model`, `prompt_version`. Use these to: bill internally, enforce monthly quota per subscription, A/B test prompt versions, and reproduce a generation from `input_payload` without re-billing.
+
 ### WorkoutLog
 
 A record of a completed training session. Can follow a `WorkoutTemplate` or be ad-hoc. If following a plan, references the specific plan week and day.
@@ -162,30 +178,52 @@ The actual performance of one exercise within a log session. Stores:
 
 ## Identity & Authentication
 
-- Identity is managed externally by **Clerk**.
-- The `userId` (Clerk's subject) arrives in the JWT as the `sub` claim.
-- **Never store passwords.** The API trusts the JWT issued by Clerk.
+- Identity is owned by an **external auth provider**. Today: Clerk. The pair `(auth_provider, external_user_id)` is the stable foreign identity. The DB schema must never assume a single provider — use the `auth_provider` enum so we can add Auth0/Supabase/etc. without schema changes.
+- The JWT issued by the provider arrives in every request. The `sub` claim becomes `external_user_id`. Combined with the configured `auth_provider`, we resolve the local `users` row.
+- **Never store passwords.** The API trusts the JWT issued by the auth provider.
 - User roles (`USER`, `ADMIN`) are stored in our database, not in the JWT.
-- Always treat `userId` as an opaque string — never cast to integer.
-- `UserProfile` stores extended data: weight (kg), height (cm), primary discipline, active goal.
+- Always treat `external_user_id` as an opaque string — never cast to integer.
+- `UserProfile` stores extended data: weight (kg), height (cm), primary discipline, preferred locale.
 - **Weight is required** for hangboard-related plan generation — strength-to-weight ratio is a core metric in climbing. Block AI plan generation if weight is not set.
 
 ---
 
 ## Subscription & Feature Gating
 
-| Feature | Free | Premium |
-|---|---|---|
-| Log workout sessions | ✅ | ✅ |
-| Access platform exercises | ✅ | ✅ |
-| Basic platform workout templates | ✅ | ✅ |
-| All platform content | ❌ | ✅ |
-| Create & share exercises | ✅ (limited) | ✅ (unlimited) |
-| AI plan generation | ❌ | ✅ |
-| Advanced analytics & progress charts | ❌ | ✅ |
-| Training groups | ❌ | ✅ |
+### Model
+- **Tier** (`subscription_tiers`): catalog of product levels (`FREE`, `BASIC`, `PREMIUM`, ...). Translatable marketing copy lives in `subscription_tier_translations`.
+- **Plan** (`subscription_plans`): a concrete SKU = `tier × billing_period × currency × price`. Billing periods: `MONTHLY`, `YEARLY`, `LIFETIME` (used for the free tier).
+- **PaymentCustomer** (`payment_customers`): canonical mapping `(user, payment_provider) → external_customer_id`. Stable across plan changes — Stripe customer id lives here, never on subscription rows.
+- **UserSubscription** (`user_subscriptions`): a user's current state for a plan. Stripe-style fields: `status`, `current_period_start/end`, `trial_ends_at`, `cancel_at_period_end`, `payment_provider`, `external_subscription_id`. `payment_provider` is `NULL` for the internal free plan (no gateway involved).
+- **SubscriptionInvoice** (`subscription_invoices`): historical billing record per invoice issued by the provider. Used for billing history UI, refunds and accounting.
+- **PaymentWebhookEvent** (`payment_webhook_events`): inbound provider events. `UNIQUE(provider, external_event_id)` gives at-most-once processing semantics — duplicated deliveries are no-ops.
+- Statuses: `TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELLED`, `EXPIRED`. A user can have at most one non-terminal subscription at a time (enforced by partial unique index).
+- Plan changes create a **new** `user_subscriptions` row; the previous row transitions to `CANCELLED`. Renewals update `current_period_*` on the same row.
 
-Subscription check must happen in the **application service** before invoking premium use cases. Never check subscription in the domain layer.
+### Payment provider abstraction (hexagonal)
+- Today's gateway is **Stripe**. The DB schema must not lock to it.
+- `payment_provider` is a Postgres enum (`STRIPE` today) — adding `PADDLE`, `LEMONSQUEEZY`, etc. is a one-line `ALTER TYPE`.
+- All external references are namespaced by provider: `(payment_provider, external_subscription_id)`, `(payment_provider, external_invoice_id)`, `(payment_provider, external_customer_id)`.
+- Domain layer defines a `PaymentGatewayPort` output port with operations like `createCheckoutSession`, `cancelAtPeriodEnd`, `openCustomerPortal`. Stripe-specific code lives only in the adapter.
+- Webhooks land on a dedicated controller (no auth — verified by signature). The controller persists the raw event in `payment_webhook_events`, then dispatches to an application service that mutates `user_subscriptions` / `subscription_invoices`.
+
+### Feature gating
+| Feature | Free | Basic | Premium |
+|---|---|---|---|
+| Log workout sessions | ✅ | ✅ | ✅ |
+| Access platform exercises | ✅ | ✅ | ✅ |
+| Basic platform workout templates | ✅ | ✅ | ✅ |
+| All platform content | ❌ | ✅ | ✅ |
+| Create & share exercises | ✅ (limited) | ✅ | ✅ (unlimited) |
+| AI plan generation | ❌ | ❌ | ✅ |
+| Advanced analytics & progress charts | ❌ | ✅ | ✅ |
+| Training groups | ❌ | ❌ | ✅ |
+
+Subscription check must happen in the **application service** before invoking premium use cases. Never check subscription in the domain layer. Resolve the user's effective tier via their active `UserSubscription → Plan → Tier`.
+
+### Provisioning invariants
+- Every active user has **at least one** `user_subscriptions` row. On first sign-up, the application service inserts a row pointing to the FREE/LIFETIME plan with `status = ACTIVE` and `payment_provider = NULL`.
+- Downgrade on cancellation: when a paid subscription transitions to `EXPIRED`, the application service must insert a new FREE row so the user is never left without a tier.
 
 ---
 
