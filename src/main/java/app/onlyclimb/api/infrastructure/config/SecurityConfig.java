@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/gyms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/routes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/exercises/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/workout-templates/**").permitAll()
                         // Everything else requires a valid Clerk JWT
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
