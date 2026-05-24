@@ -9,6 +9,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+import java.util.UUID;
+
 /**
  * Resolves the authenticated principal to a local {@link User} aggregate.
  * Used by {@code /me} endpoints.
@@ -28,5 +31,14 @@ public class CurrentUserService {
             throw new UserNotFoundException("anonymous");
         }
         return getUserUseCase.getByAuthIdentity(AuthProvider.CLERK, externalId);
+    }
+
+    /** Best-effort resolution: returns empty for anonymous or unknown principals. */
+    public Optional<UUID> optionalCurrentId(Authentication authentication) {
+        try {
+            return Optional.of(requireCurrent(authentication).getId());
+        } catch (UserNotFoundException ex) {
+            return Optional.empty();
+        }
     }
 }

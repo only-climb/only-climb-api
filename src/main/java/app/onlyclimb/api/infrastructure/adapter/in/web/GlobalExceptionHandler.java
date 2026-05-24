@@ -1,6 +1,9 @@
 package app.onlyclimb.api.infrastructure.adapter.in.web;
 
+import app.onlyclimb.api.domain.exception.ContentOwnershipException;
 import app.onlyclimb.api.domain.exception.DuplicateUserException;
+import app.onlyclimb.api.domain.exception.ExerciseNotFoundException;
+import app.onlyclimb.api.domain.exception.PlatformContentImmutableException;
 import app.onlyclimb.api.domain.exception.UserNotFoundException;
 import app.onlyclimb.api.domain.exception.UserProfileNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -17,9 +20,20 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({UserNotFoundException.class, UserProfileNotFoundException.class})
+    @ExceptionHandler({UserNotFoundException.class, UserProfileNotFoundException.class,
+            ExerciseNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ContentOwnershipException.class)
+    public ProblemDetail handleContentOwnership(ContentOwnershipException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(PlatformContentImmutableException.class)
+    public ProblemDetail handlePlatformImmutable(PlatformContentImmutableException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(DuplicateUserException.class)
