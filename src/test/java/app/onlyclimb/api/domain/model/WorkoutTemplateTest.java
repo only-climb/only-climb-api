@@ -128,15 +128,15 @@ class WorkoutTemplateTest {
     }
 
     @Test
-    void resolveField_fallsBackToEnglish() {
+    void resolveField_fallsBackToSpanish() {
         WorkoutTemplate t = WorkoutTemplate.createUserTemplate(
                 OWNER, null, DifficultyLevel.BEGINNER, null, null,
                 List.of(entry(1)),
                 List.of(
                         new Translation("en", WorkoutTemplate.FIELD_NAME, "Hangboard"),
                         new Translation("es", WorkoutTemplate.FIELD_NAME, "Tabla")));
-        assertThat(t.resolveField(WorkoutTemplate.FIELD_NAME, "es")).contains("Tabla");
-        assertThat(t.resolveField(WorkoutTemplate.FIELD_NAME, "fr")).contains("Hangboard");
+        assertThat(t.resolveField(WorkoutTemplate.FIELD_NAME, "en")).contains("Hangboard");
+        assertThat(t.resolveField(WorkoutTemplate.FIELD_NAME, "fr")).contains("Tabla");
     }
 
     @Test

@@ -131,15 +131,15 @@ public class AssessmentController {
     // ------------------------------------------------------------------------
 
     private static String resolveLocale(String header) {
-        if (header == null || header.isBlank()) return "en";
+        if (header == null || header.isBlank()) return "es";
         try {
             List<Locale.LanguageRange> ranges = Locale.LanguageRange.parse(header);
-            if (ranges.isEmpty()) return "en";
+            if (ranges.isEmpty()) return "es";
             String tag = ranges.get(0).getRange();
             int dash = tag.indexOf('-');
             return (dash > 0 ? tag.substring(0, dash) : tag).toLowerCase(Locale.ROOT);
         } catch (IllegalArgumentException ex) {
-            return "en";
+            return "es";
         }
     }
 }

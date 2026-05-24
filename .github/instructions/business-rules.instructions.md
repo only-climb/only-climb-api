@@ -48,7 +48,7 @@ The atomic training unit.
 | `GRIP_TYPE` | `CRIMP`, `OPEN_HAND`, `HALF_CRIMP`, `PINCH`, `SLOPER`, `MONO` |
 | `RPE` | Rate of Perceived Exertion (1–10) |
 
-**i18n:** name and description are translatable (platform exercises have EN + ES minimum). User-created exercises are stored in whatever language the user writes — no translation is applied.
+**i18n:** name and description are translatable (platform exercises have ES + EN minimum — Spanish is the default project locale). User-created exercises are stored in whatever language the user writes — no translation is applied.
 
 ### WorkoutTemplate
 
@@ -231,7 +231,7 @@ Subscription check must happen in the **application service** before invoking pr
 
 | Content type | Languages | Who provides translations |
 |---|---|---|
-| Platform exercises, plans, tests | EN + ES minimum | Platform admin |
+| Platform exercises, plans, tests | ES + EN minimum (ES is the default) | Platform admin |
 | User-created content | User's own language | Not translated |
 | UI strings | Separate concern — not in DB | Frontend |
 
@@ -302,8 +302,8 @@ category                         locale (VARCHAR, e.g. "en", "es")
 
 **Rules:**
 - Only PLATFORM content is translated by the platform. USER_CREATED content is stored as-is.
-- Supported locales at launch: `en` (required, fallback), `es`.
-- If a translation for the requested locale does not exist, fall back to `en`.
+- Supported locales at launch: `es` (default, required, fallback), `en`.
+- If a translation for the requested locale does not exist, fall back to `es`.
 - The API reads the desired locale from the `Accept-Language` header.
 - **Never add `name_en`, `name_es`, `description_en`, `description_es` columns** to entity tables — this does not scale and requires schema changes per new language.
 - Entities that require translation: `Exercise`, `WorkoutTemplate`, `TrainingPlan`, `AssessmentDefinition`, `ExerciseCategory`, `GoalType`.

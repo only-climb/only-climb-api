@@ -71,8 +71,8 @@ public class AssessmentTest {
             Translation exact = translations.get(locale.toLowerCase(Locale.ROOT) + ":" + field);
             if (exact != null) return Optional.of(exact.value());
         }
-        Translation en = translations.get("en:" + field);
-        if (en != null) return Optional.of(en.value());
+        Translation fallback = translations.get("es:" + field);
+        if (fallback != null) return Optional.of(fallback.value());
         return translations.values().stream()
                 .filter(t -> t.field().equals(field))
                 .map(Translation::value)

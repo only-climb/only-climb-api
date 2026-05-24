@@ -269,8 +269,8 @@ public class WorkoutTemplate {
         String locale = preferredLocale == null ? "" : preferredLocale.toLowerCase(Locale.ROOT);
         Translation primary = translations.get(key(locale, field));
         if (primary != null) return Optional.of(primary.value());
-        Translation english = translations.get(key("en", field));
-        if (english != null) return Optional.of(english.value());
+        Translation fallback = translations.get(key("es", field));
+        if (fallback != null) return Optional.of(fallback.value());
         return translations.values().stream()
                 .filter(t -> t.field().equals(field))
                 .findFirst()

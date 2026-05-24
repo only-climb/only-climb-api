@@ -9,11 +9,11 @@ import java.util.UUID;
  * Extended user attributes (1:1 with {@link User}). Lives as its own aggregate
  * root so it can be loaded and updated independently of the auth-bound user row.
  * All physical fields are optional except {@code locale}, which defaults to
- * "en" to drive the i18n fallback.
+ * "es" (Only Climb's primary language) to drive the i18n fallback.
  */
 public class UserProfile {
 
-    public static final String DEFAULT_LOCALE = "en";
+    public static final String DEFAULT_LOCALE = "es";
 
     private final UUID id;
     private final UUID userId;

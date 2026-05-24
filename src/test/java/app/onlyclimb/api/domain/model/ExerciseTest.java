@@ -104,7 +104,7 @@ class ExerciseTest {
     }
 
     @Test
-    void resolveField_fallsBackToEnglish() {
+    void resolveField_fallsBackToSpanish() {
         Exercise e = Exercise.createUserExercise(
                 OWNER, "HANGBOARD", "FINGERS",
                 DifficultyLevel.BEGINNER, SafetyWarningLevel.NONE,
@@ -113,8 +113,8 @@ class ExerciseTest {
                         new Translation("en", Exercise.FIELD_NAME, "Hangboard"),
                         new Translation("es", Exercise.FIELD_NAME, "Tabla")),
                 null);
-        assertThat(e.resolveField(Exercise.FIELD_NAME, "es")).contains("Tabla");
-        assertThat(e.resolveField(Exercise.FIELD_NAME, "fr")).contains("Hangboard");
+        assertThat(e.resolveField(Exercise.FIELD_NAME, "en")).contains("Hangboard");
+        assertThat(e.resolveField(Exercise.FIELD_NAME, "fr")).contains("Tabla");
     }
 
     @Test

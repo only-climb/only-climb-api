@@ -260,8 +260,9 @@ public class Exercise {
 
     /**
      * Resolves the value of a translatable field for the requested locale.
-     * Falls back to {@code en}; if that is missing, falls back to any
-     * available translation. Returns empty if the field has no translations.
+     * Falls back to {@code es} (project default); if that is missing, falls
+     * back to any available translation. Returns empty if the field has no
+     * translations.
      */
     public Optional<String> resolveField(String field, String preferredLocale) {
         ensureFieldAllowed(field);
@@ -270,9 +271,9 @@ public class Exercise {
         if (primary != null) {
             return Optional.of(primary.value());
         }
-        Translation english = translations.get(key("en", field));
-        if (english != null) {
-            return Optional.of(english.value());
+        Translation fallback = translations.get(key("es", field));
+        if (fallback != null) {
+            return Optional.of(fallback.value());
         }
         return translations.values().stream()
                 .filter(t -> t.field().equals(field))

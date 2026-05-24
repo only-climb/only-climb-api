@@ -82,8 +82,8 @@ public class WorkoutTemplateExercise {
         String locale = preferredLocale == null ? "" : preferredLocale.toLowerCase(Locale.ROOT);
         Translation primary = notesTranslations.get(locale);
         if (primary != null) return Optional.of(primary.value());
-        Translation english = notesTranslations.get("en");
-        if (english != null) return Optional.of(english.value());
+        Translation fallback = notesTranslations.get("es");
+        if (fallback != null) return Optional.of(fallback.value());
         return notesTranslations.values().stream().findFirst().map(Translation::value);
     }
 }

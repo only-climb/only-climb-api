@@ -25,19 +25,19 @@ class AssessmentDefinitionTest {
     }
 
     @Test
-    void resolveField_fallsBackToEnglishThenAny() {
+    void resolveField_fallsBackToSpanishThenAny() {
         UUID id = UUID.randomUUID();
         AssessmentDefinition def = new AssessmentDefinition(
                 id, "CODE", null, true, List.of(),
                 List.of(
-                        new Translation("en", "name", "Hello"),
+                        new Translation("es", "name", "Hola"),
                         new Translation("fr", "name", "Bonjour")),
                 Instant.now(), Instant.now());
 
         assertThat(def.resolveField("name", "fr")).contains("Bonjour");
-        assertThat(def.resolveField("name", "es")).contains("Hello");
-        assertThat(def.resolveField("name", null)).contains("Hello");
-        assertThat(def.resolveField("description", "en")).isEmpty();
+        assertThat(def.resolveField("name", "en")).contains("Hola");
+        assertThat(def.resolveField("name", null)).contains("Hola");
+        assertThat(def.resolveField("description", "es")).isEmpty();
     }
 
     @Test
