@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Public webhook (signature-authenticated)
                         .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/clerk").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/stripe").permitAll()
                         // Public read-only catalog endpoints (future)
                         .requestMatchers(HttpMethod.GET, "/api/v1/gyms/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/routes/**").permitAll()

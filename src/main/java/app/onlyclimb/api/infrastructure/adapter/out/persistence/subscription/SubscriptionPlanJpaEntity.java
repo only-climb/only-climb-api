@@ -1,16 +1,20 @@
-package app.onlyclimb.api.infrastructure.adapter.out.persistence.user;
+package app.onlyclimb.api.infrastructure.adapter.out.persistence.subscription;
 
-import app.onlyclimb.api.domain.model.AuthProvider;
-import app.onlyclimb.api.domain.model.UserRole;
+import app.onlyclimb.api.domain.model.BillingPeriod;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,20 +22,17 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
-import java.util.UUID;
-
 @Entity
 @Table(
-        name = "users",
+        name = "subscription_plans",
         uniqueConstraints = @UniqueConstraint(
-                name = "users_auth_provider_external_user_id_key",
-                columnNames = {"auth_provider", "external_user_id"})
+                name = "subscription_plans_tier_id_billing_period_currency_key",
+                columnNames = {"tier_id", "billing_period", "currency"})
 )
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserJpaEntity {
+class SubscriptionPlanJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,25 +47,24 @@ public class UserJpaEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tier_id", nullable = false)
+    private SubscriptionTierJpaEntity tier;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "auth_provider", nullable = false, columnDefinition = "auth_provider")
-    private AuthProvider authProvider;
+    @Column(name = "billing_period", nullable = false, columnDefinition = "billing_period")
+    private BillingPeriod billingPeriod;
 
-    @Column(name = "external_user_id", nullable = false, length = 255)
-    private String externalUserId;
+    @Column(name = "price_cents", nullable = false)
+    private int priceCents;
 
-    @Column(name = "email", nullable = false, length = 320)
-    private String email;
+    @Column(nullable = false, length = 3)
+    private String currency;
 
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "role", nullable = false, columnDefinition = "user_role")
-    private UserRole role;
+    @Column(name = "external_ref", length = 255)
+    private String externalRef;
 
-    @Column(name = "last_login_at")
-    private Instant lastLoginAt;
+    @Column(name = "is_active", nullable = false)
+    private boolean active;
 }

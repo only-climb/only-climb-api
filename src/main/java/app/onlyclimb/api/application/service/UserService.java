@@ -12,6 +12,7 @@ import app.onlyclimb.api.domain.model.Weight;
 import app.onlyclimb.api.domain.port.in.DeleteUserUseCase;
 import app.onlyclimb.api.domain.port.in.GetUserProfileUseCase;
 import app.onlyclimb.api.domain.port.in.GetUserUseCase;
+import app.onlyclimb.api.domain.port.in.ProvisionFreeSubscriptionUseCase;
 import app.onlyclimb.api.domain.port.in.RegisterUserCommand;
 import app.onlyclimb.api.domain.port.in.RegisterUserUseCase;
 import app.onlyclimb.api.domain.port.in.UpdateUserProfileCommand;
@@ -32,6 +33,7 @@ public class UserService
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final ProvisionFreeSubscriptionUseCase provisionFreeSubscriptionUseCase;
 
     @Override
     @Transactional
@@ -56,8 +58,7 @@ public class UserService
                     User user = User.register(provider, externalId, email);
                     User saved = userRepository.save(user);
                     userProfileRepository.save(UserProfile.empty(saved.getId()));
-                    // TODO: provision a FREE/LIFETIME UserSubscription once the
-                    //       subscription aggregate is implemented.
+                    provisionFreeSubscriptionUseCase.provision(saved.getId());
                     return saved;
                 });
     }
