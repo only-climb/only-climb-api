@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/only-climb/only-climb-api/compare/v0.1.0...v0.2.0) (2026-06-20)
+
+
+### Features
+
+* **workflows:** update CI/CD workflows to enhance auto-merge functio… ([253ae35](https://github.com/only-climb/only-climb-api/commit/253ae35d91f4d6d3700d6502942edd4c61e31265))
+
 ## [0.1.0](https://github.com/only-climb/only-climb-api/compare/v0.0.1...v0.1.0) (2026-06-20)
 
 
