@@ -1,0 +1,27 @@
+# =============================================================================
+# Release Please — Automated versioning, changelog, and GitHub Releases
+#
+# On push to main: creates/updates a release PR with conventional commits.
+# When the release PR is merged: creates the tag + GitHub Release.
+# Then attach-artifacts.yml builds and publishes the Docker image.
+#
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  REQUIREMENT: Personal Access Token with `repo` scope                   ║
+# ║  1. Go to https://github.com/settings/tokens → Generate classic PAT     ║
+# ║  2. Save as repo secret: REPO → Settings → Secrets → Actions           ║
+# ║     Name: RELEASE_PLEASE_TOKEN → Value: <token>                        ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+# =============================================================================
+name: 🤖 Release Please
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}

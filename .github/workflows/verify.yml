@@ -3,9 +3,9 @@
 #
 # Runs on every push/PR to `main` to ensure code quality and test stability.
 #   - Pull request  → build, test, package (blocking check for merge)
-#   - Push to main  → build, test, package, then trigger release-please
+#   - Push to main  → build, test, package
 #
-# Jobs run sequentially: build-and-test → package → release-please
+# Jobs run sequentially: build-and-test → package
 # =============================================================================
 name: 🔍 Verify
 
@@ -75,23 +75,3 @@ jobs:
           name: app-jar
           path: target/*.jar
           retention-days: 7
-
-  # ---------------------------------------------------------------------------
-  # 3. Release Please — automatic version bump + changelog + release PR
-  #    Only runs on push to main (not on pull_request).
-  #    Uses GITHUB_TOKEN; if blocked by org policy, switch to a PAT:
-  #    token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-  # ---------------------------------------------------------------------------
-  release-please:
-    name: 🤖 Release Please
-    needs: build-and-test
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - name: Run release-please
-        uses: googleapis/release-please-action@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
