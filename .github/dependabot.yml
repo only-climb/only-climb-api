@@ -1,0 +1,77 @@
+# =============================================================================
+# Dependabot — automatic dependency updates
+#
+# Opens PRs for Maven and GitHub Actions dependencies.
+# Patch and minor updates are auto-merged via dependabot-auto-merge.yml.
+# Major updates are reviewed manually.
+# =============================================================================
+
+version: 2
+updates:
+
+  # ── Maven (pom.xml) ─────────────────────────────────────────────────────
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - maven
+    commit-message:
+      prefix: fix
+      prefix-development: chore
+      include: scope
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+          - "org.springframework:*"
+        update-types:
+          - minor
+          - patch
+      testcontainers:
+        patterns:
+          - "org.testcontainers:*"
+        update-types:
+          - minor
+          - patch
+      test-deps:
+        patterns:
+          - "*.test:*"
+          - "*.test.*:*"
+        update-types:
+          - minor
+          - patch
+      all-other:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ── GitHub Actions (workflows) ──────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
