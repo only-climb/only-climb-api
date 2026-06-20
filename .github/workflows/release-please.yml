@@ -15,3 +15,8 @@ jobs:
       - uses: googleapis/release-please-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # NOTA: Si ves el error "not permitted to create or approve pull requests",
+          # ve a Settings → Actions → General y activa:
+          # "Allow GitHub Actions to create and approve pull requests"
+          # O alternativamente crea un PAT y úsalo como RELEASE_PLEASE_TOKEN:
+          # token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
